@@ -15,7 +15,7 @@ rnn_hid_size = 128 # 模型 lstm 隐层大小
 out_size = in_cls_cnt # 模型输出字符数
 
 # == 训练还是预测
-is_train = True
+is_train = False
 
 # == 训练参数
 begin_lr = 0.01 # 学习率
@@ -30,6 +30,7 @@ save_prefix = "cnn_model" # 模型存储文件的文件名的前缀
 prefix_for_txt_gen = "int main(int char" # 文本生成的时候，以此为前缀生成
 predict_gen_len = 1000 # 一共生成多长的文本
 load_epoch_id = 70 # 加载save下来的哪一个模型数据
+temperature = 0.6 # 用于控制生成的多样性。lower temperature will cause the model to make more likely, but also more boring and conservative predictions. Higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.
 
 # ======================================
 
@@ -86,7 +87,9 @@ def charrnn_model():
                 tf.get_variable_scope().reuse_variables()
                 cur_out, cur_state = cell(cell_input, cell_state)
             # cur_out.shape == (batch_size, rnn_hid_size)
-            cur_prob = tf.nn.softmax(tf.matmul(cur_out, softmax_w) + softmax_b)
+
+            logits = tf.matmul(cur_out, softmax_w) + softmax_b
+            cur_prob = tf.nn.softmax(logits / temperature)
             # cur_prob.shape == (batch_size, out_size)
 
             out = tf.multinomial(tf.log(cur_prob), 1)
