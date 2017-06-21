@@ -12,6 +12,7 @@ save_path = "save_path"
 
 content_file = "building.png"
 style_file = "fangao_sky.png"
+noise_img_use_content_img = False # 数据初始化，是直接用随机初始，还是content image 噪声化得到
 
 # -- for model
 IMAGE_WIDTH = 800
@@ -43,14 +44,26 @@ class Vgg19Model(object):
         bias = tf.constant(np.reshape(bias, (bias.size)))
         return weights, bias
 
+    def generate_noise_image(self, content_image, noise_ratio=0.6):
+        """
+        Returns a noise image intermixed with the content image at a certain ratio.
+        """
+        noise_image = np.random.uniform(-20, 20,
+                (1, IMAGE_HEIGHT, IMAGE_WIDTH, 3)).astype('float32')
+        # White noise image from the content representation. Take a weighted average
+        # of the values
+        img = noise_image * noise_ratio + content_image * (1 - noise_ratio)
+        return img
+
     def __init__(self, path):
         net = {}
         vgg_rawnet = scipy.io.loadmat(path) # should be a .mat file
         vgg_layers = vgg_rawnet['layers'][0]
     
-        # 这里存放有噪声初始化的图片，训练过程就是优化它
+        # 这里存放有,随机初始化的图片，训练过程就是优化它
         net['input'] = tf.Variable(tf.truncated_normal([1, IMAGE_HEIGHT, 
-                       IMAGE_WIDTH, 3], mean=100., stddev=20., dtype=tf.float32))
+                       IMAGE_WIDTH, 3], mean=100., stddev=20., dtype=tf.float32)) # mean=100，因为图片数据处理就是
+                                                                                  # rgb数值减去取值约为1百多的 MEAN 得到
 
         net['conv1_1'] = self.build_net('conv', net['input'], self.get_weight_bias(vgg_layers, 0))
         net['conv1_2'] = self.build_net('conv', net['conv1_1'], self.get_weight_bias(vgg_layers, 2))
@@ -125,6 +138,11 @@ opt = optimizer.minimize(total_loss)
 
 sess.run(tf.global_variables_initializer()) # 这才开始初始化模型变量
 
+if noise_img_use_content_img:
+    # 待训练优化的图片的初始化，是否是 content image 加噪声得到
+    # 这样会加速训练。如果待训练优化的图片的初始化完全用随机初始化，也能得到结果，但是会慢些
+    sess.run(tf.assign(vgg.input, vgg.generate_noise_image(content_img)))
+
 # -- train 
 for i in xrange(step_cnt):
     _, loss = sess.run([opt, total_loss])
@@ -137,4 +155,3 @@ for i in xrange(step_cnt):
         img_obj.save("%s/%d.png" % (save_path, i))
         print "step=%d save generated image to %s/%d.png" % (i, save_path, i)
     print "step=%d loss=%.6f" % (i, loss)
-
