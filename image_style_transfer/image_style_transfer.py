@@ -49,7 +49,6 @@ class Vgg19Model(object):
         vgg_layers = vgg_rawnet['layers'][0]
     
         # 这里存放有噪声初始化的图片，训练过程就是优化它
-        #net['input'] = tf.Variable(np.zeros((1, IMAGE_HEIGHT, IMAGE_WIDTH, 3)).astype('float32'))
         net['input'] = tf.Variable(tf.truncated_normal([1, IMAGE_HEIGHT, 
                        IMAGE_WIDTH, 3], mean=100., stddev=20., dtype=tf.float32))
 
