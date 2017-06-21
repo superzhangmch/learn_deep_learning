@@ -5,7 +5,7 @@ import scipy.io
 from PIL import Image
 
 # -- for train and test
-learn_rate = 2.
+learn_rate = 2. # 需要一个比较大学习率
 step_cnt = 10000
 save_every_cnt = 50
 save_path = "save_path"
@@ -16,9 +16,9 @@ style_file = "fangao_sky.png"
 # -- for model
 IMAGE_WIDTH = 800
 IMAGE_HEIGHT = 600
-vgg_mat_file = "imagenet-vgg-verydeep-19.mat"
-content_fm_names = ["conv4_2"]
-style_fm_names = ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"]
+vgg_mat_file = "imagenet-vgg-verydeep-19.mat" # 下载地址 http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat
+content_fm_names = ["conv4_2"] # 原始论文就用的这层
+style_fm_names = ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"] # 原始论文就用的这些层
 content_loss_weight = 0.001
 style_loss_weight =  1.
 
